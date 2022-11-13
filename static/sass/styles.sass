@@ -1,1 +1,88 @@
 @use "variables" as v
+
+// -- Global styles
+body
+    background-color: v.$secondary
+
+.btn-def
+    background-color: v.$primary
+    color: white
+    font-weight: bold
+    text-transform: uppercase
+    border-radius: 0
+    
+    &:hover
+        background-color: v.$secondary
+        color: white
+    
+    &:focus
+        background-color: white
+        color: v.$primary
+        outline-color: v.$primary
+
+// - Forms
+.form-cont
+    background-color: v.$primary
+    height: fit-content
+    
+    .form-header, .form-footer
+        padding: 20px 20px
+        color: white
+    
+    .form-header
+        .form-title
+            text-transform: uppercase
+        
+        .form-description
+            margin: 0
+    
+    .form
+        padding: 30px 15px
+        background-color: white
+        
+        .form-group
+            margin-bottom: 15px
+            
+            input[type="text"], input[type="email"], input[type="password"]
+                border: none
+                border-bottom: 1px solid v.$light
+                width: 100%
+                transition: border-bottom-color 0.5s
+                
+                &::placeholder
+                    color: v.$light
+                
+                &:focus
+                    outline: none
+                    border-bottom-color: v.$primary
+                    
+                    &::placeholder
+                        transition: color 0.5s
+                        color: v.$primary
+        
+        .form-submit-cont
+            text-align: right
+    
+    .form-footer
+        a
+            text-decoration: none
+            font-weight: bold
+
+
+// -- Page specific styles
+#register-cont
+    width: fit-content
+    position: absolute
+    top: 50%
+    left: 50%
+    transform: translate(-50%, -50%)
+    box-shadow: 5px 5px v.$primary_transparent
+    -webkit-box-shadow: 5px 5px v.$primary_transparent
+    -moz-box-shadow: 5px 5px v.$primary_transparent
+
+@media only screen and (max-width: v.$small)
+    #register-cont
+        width: 90%
+        box-shadow: none
+        -webkit-box-shadow: none
+        -moz-box-shadow: none
