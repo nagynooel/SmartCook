@@ -20,6 +20,25 @@ body
         color: v.$primary
         outline-color: v.$primary
 
+// - Alert
+.alert
+    width: fit-content
+    display: block
+    position: absolute
+    top: 10px
+    left: 50%
+    transform: translate(-50%, 0)
+    z-index: 99
+
+.alert-success
+    background-color: #4BB543
+    color: white
+    border: none
+
+@media only screen and (max-width: v.$small)
+    .alert
+        width: 90%
+
 // - Forms
 .form-cont
     background-color: v.$primary
