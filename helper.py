@@ -3,6 +3,10 @@ from flask import render_template, redirect, flash
 from re import match
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from os import environ
+from email.message import EmailMessage
+import smtplib, ssl
+
 # -- Global variables
 encryption_method = "pbkdf2:sha256:120000"
 
@@ -18,6 +22,32 @@ def error(message, code=400):
 def redirect_alert(redirect_to: str, alert_msg:str, alert_type="danger"):
     flash(alert_msg, "alert-" + alert_type)
     return redirect(redirect_to)
+
+# Create email message object
+def create_msg(receiver: str, subject: str, plain: str, html: str):
+    msg = EmailMessage()
+    
+    # Generic email headers
+    msg["From"] = f'SmartCook <{environ.get("SMTP_EMAIL")}>'
+    msg["To"] = receiver
+    msg["Subject"] = subject
+    
+    # Set the plain text body
+    msg.set_content(plain)
+    
+    # Set an alternative HTML body
+    msg.add_alternative(html, subtype='html')
+    
+    return msg
+
+# Send SSL email using credentials and SMTP host set in environ variables
+def send_email(msg: EmailMessage):
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(environ.get("SMTP_SERVER"), environ.get("SMTP_PORT"), context=context) as server:
+        server.login(environ.get("SMTP_EMAIL"), environ.get("SMTP_PASSWORD"))
+        server.sendmail(
+            environ.get("SMTP_EMAIL"), msg["To"], msg.as_string()
+        )
 
 # - Registration
 # Validate: email address format - returns bool
