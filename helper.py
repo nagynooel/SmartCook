@@ -1,7 +1,10 @@
 from flask import render_template, redirect, flash
 
 from re import match
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# -- Global variables
+encryption_method = "pbkdf2:sha256:120000"
 
 # -- Error handling
 # Render error to user
@@ -26,8 +29,12 @@ def validate_email(email: str):
 
 # Generate hash from password
 def generate_hash(password: str):
-    encryption_method = "pbkdf2:sha256:120000"
     werkzeug_hash = generate_password_hash(password, method=encryption_method, salt_length=5).split("$")
     salt = werkzeug_hash[1]
     hash = werkzeug_hash[2]
     return (salt, hash)
+
+# - Login
+# Check if the hash matches the password
+def check_hash(hash: str, salt: str, password: str):
+    return check_password_hash(f"{encryption_method}${salt}${hash}", password)

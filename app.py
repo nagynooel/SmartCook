@@ -4,7 +4,7 @@ from flask_session import Session
 import mysql.connector
 from os import environ
 
-from helper import error, redirect_alert, validate_email, generate_hash
+from helper import error, redirect_alert, validate_email, generate_hash, check_hash
 
 # -- Configure application
 app = Flask(__name__)
@@ -46,7 +46,6 @@ def register():
         confirm_password = request.form.get("confirm-password")
         
         # - Validate inputs
-        
         # Validate: all fields are filled out
         if not username or not email or not password or not confirm_password:
             return redirect_alert(f"/register?username={username}&email={email}", "Please fill out all fields!")
@@ -101,6 +100,53 @@ def register():
     email = request.args.get("email").strip() if request.args.get("email") else ""
     
     return render_template("register.html", username=username, email=email)
+
+
+# Log in to existing account
+@app.route("/login", methods=["GET","POST"])
+def login():
+    # -- POST request
+    if request.method == "POST":
+        # - Get user input
+        username = request.form.get("username")
+        password = request.form.get("password")
+        
+        # - Validate inputs
+        # Validate: fields are not empty
+        if not username or not password:
+            return redirect_alert(f"/login", "Please fill out all fields!")
+        
+        # Get: hashed password and user id from users table
+        c.execute("SELECT hash, salt, id FROM users WHERE UPPER(username) = %s;", (username.upper(),))
+        query = c.fetchone()
+        
+        # Validate: user exists
+        if not query:
+            return redirect_alert(f"/login", "Incorrect username or password!")
+        
+        # Split query into variables
+        hash, salt, uid = query
+        
+        # Validate: password matches hash
+        if not check_hash(hash, salt, password):
+            return redirect_alert(f"/login", "Incorrect username or password!")
+        
+        # - Log user in
+        session["uid"] = uid
+        session["username"] = username
+        
+        return redirect("/")
+    
+    # -- GET request
+    return render_template("login.html")
+
+
+# Log out from account
+@app.route("/logout")
+def logout():
+    session.clear()
+    
+    return redirect("/login")
 
 
 # !! DELETE ON PRODUCTION !!
