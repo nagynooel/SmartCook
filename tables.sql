@@ -10,3 +10,14 @@ CREATE TABLE users (
 
 CREATE UNIQUE INDEX idx_uid ON users (id);
 CREATE UNIQUE INDEX idx_username ON users (username);
+
+CREATE TABLE password_reset_tokens (
+    token VARCHAR(86) NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
+    expiration_date DATETIME NOT NULL DEFAULT (NOW() + INTERVAL 15 MINUTE),
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (token),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE UNIQUE INDEX idx_password_reset_token ON password_reset_tokens (token);

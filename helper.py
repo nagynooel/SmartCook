@@ -7,6 +7,8 @@ from os import environ
 from email.message import EmailMessage
 import smtplib, ssl
 
+from datetime import datetime, timezone
+
 # -- Global variables
 encryption_method = "pbkdf2:sha256:120000"
 
@@ -68,3 +70,15 @@ def generate_hash(password: str):
 # Check if the hash matches the password
 def check_hash(hash: str, salt: str, password: str):
     return check_password_hash(f"{encryption_method}${salt}${hash}", password)
+
+# - Password reset
+# Check if given expiration date "expired" or not - returns True if expired otherwise False
+def check_expiration(expiration, exp_timezone=timezone.utc):
+    expiration_date = expiration.replace(tzinfo=exp_timezone)
+    current_datetime = datetime.now(exp_timezone)
+    
+    # Throw error if token already expired
+    if current_datetime > expiration_date:
+        return True
+    
+    return False
