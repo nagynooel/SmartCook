@@ -1,0 +1,26 @@
+<div style="background-color: #262626; padding: 3rem 2rem; text-align: center;">
+    
+    <div class="title" style="color: white; margin-bottom: 2rem;">
+        <h1>SmartCook</h1>
+    </div>
+    
+    <div style="width: fit-content; max-width: 450px; margin: auto; background-color: #1a1a1a; margin-bottom: 1rem">
+        
+        <div class="container">
+            
+            <header style="padding: 1rem 2rem; color: white;">
+                <h2>{% block title %}{% endblock %}</h2>
+            </header>
+            
+            <div class="content" style="background-color: white; padding: 1rem 1rem;">
+                {% block body %}{% endblock %}
+            </div>
+            
+            <footer style="padding: 1rem 2rem; color: white;">
+                <strong>&copy;2022 Noel Nagy - All rights reserved!</strong>
+            </footer>
+        
+        </div>
+        
+    </div>
+</div>
