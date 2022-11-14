@@ -1,3 +1,11 @@
+"""
+    @package: smartcook
+    @author: Noel Nagy
+    @website: https://github.com/nagynooel
+    ©2022 Noel Nagy - All rights reserved.
+"""
+# --- Helper file containing functions and flask decorators that are made for use mainly in app.py
+
 from flask import render_template, redirect, flash
 
 from re import match

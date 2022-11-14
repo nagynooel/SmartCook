@@ -1,3 +1,11 @@
+"""
+    @package: smartcook
+    @author: Noel Nagy
+    @website: https://github.com/nagynooel
+    ©2022 Noel Nagy - All rights reserved.
+"""
+# --- Main app routing file
+
 from flask import Flask, render_template, redirect, flash, request, session
 from flask_session import Session
 

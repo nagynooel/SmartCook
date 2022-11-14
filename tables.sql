@@ -1,3 +1,11 @@
+/*
+    @package: smartcook
+    @author: Noel Nagy
+    @website: https://github.com/nagynooel
+    ©2022 Noel Nagy - All rights reserved.
+*/
+/*Create TABLE and INDEX commands for creating new database*/
+
 CREATE TABLE users (
     id INT NOT NULL UNIQUE AUTO_INCREMENT,
     username VARCHAR(20) NOT NULL UNIQUE,
