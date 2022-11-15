@@ -27,6 +27,39 @@
         {% endif %}
     {% endwith %}
     
+    <!--Top navigation bar-->
+    <nav class="container-fluid" id="top-nav">
+        <div class="nav-left">
+            <a class="navbar-brand" href="/">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">
+                <span class="ms-1">SmartCook</span>
+            </a>
+        </div>
+        {% if session["uid"] and session["username"] %}
+            <div class="nav-right">
+                <div id="top-nav-dropdown-cont">
+                    <a href="/profile" class="nav-link nav-link-image" id="top-nav-profile">
+                        <img class="me-1" src="{{ url_for('static', filename='img/no-profile-pic.svg') }}" alt="Profile Picture" width="30">
+                        {{ session['username'] }}
+                    </a>
+                    
+                    <div id="top-nav-dropdown">
+                        <ul>
+                            <li><a class="nav-link" href="/profile">Profile</a></li>
+                            <li><a class="nav-link" href="/account">Account</a></li>
+                            <li><a class="nav-link" href="/logout">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="nav-right">
+                <a href="/support" class="nav-link"><strong>Customer Support</strong></a>
+            </div>
+        {% endif %}
+    </nav>
+        
+    
     {% block body %}{% endblock %}
     <!--Scripts-->
     <script src="https://code.jquery.com/jquery-3.6.1.slim.min.js" integrity="sha256-w8CvhFs7iHNVUtnSP0YKEg00p9Ih13rlL9zGqvLdePA=" crossorigin="anonymous"></script>
