@@ -6,7 +6,10 @@
 """
 # --- Helper file containing functions and flask decorators that are made for use mainly in app.py
 
-from flask import render_template, redirect, flash
+from flask import render_template, redirect, flash, session
+
+from flask_session import Session
+from functools import wraps
 
 from re import match
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -20,10 +23,31 @@ from datetime import datetime, timezone
 # -- Global variables
 encryption_method = "pbkdf2:sha256:120000"
 
+
 # -- Error handling
 # Render error to user
 def error(message, code=400):
     return render_template("error.html", e_code = code, message = message), code
+
+
+# -- Decorators
+# Decorator to only let logged in people access page
+def logged_in_only(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("uid") is None:
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Decorator to only let people who are not logged in access the page
+def signed_out_only(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("uid") is not None:
+            return redirect("/")
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 # -- Functions

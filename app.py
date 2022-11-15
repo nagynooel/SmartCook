@@ -14,7 +14,7 @@ from os import environ
 
 from secrets import token_urlsafe
 
-from helper import error, redirect_alert, validate_email, generate_hash, check_hash, create_msg, send_email, check_expiration
+from helper import error, logged_in_only, signed_out_only, redirect_alert, validate_email, generate_hash, check_hash, create_msg, send_email, check_expiration
 
 # -- Configure application
 app = Flask(__name__)
@@ -39,6 +39,7 @@ c = db.cursor(buffered=True)
 
 # -- Routes
 @app.route('/')
+@logged_in_only
 def index():
     return error("Page unavailable!", code=404)
 
@@ -46,6 +47,7 @@ def index():
 # - Login and new user functionality
 # Register new user
 @app.route("/register", methods=["GET","POST"])
+@signed_out_only
 def register():
     # -- POST request
     if request.method == "POST":
@@ -114,6 +116,7 @@ def register():
 
 # Log in to existing account
 @app.route("/login", methods=["GET","POST"])
+@signed_out_only
 def login():
     # -- POST request
     if request.method == "POST":
@@ -161,6 +164,7 @@ def logout():
 
 # Send email with reset link
 @app.route("/reset_password", methods=["GET", "POST"])
+@signed_out_only
 def reset_password():
     # -- POST request
     if request.method == "POST":
@@ -225,6 +229,7 @@ def reset_password():
 
 # Create new password
 @app.route("/new_password", methods=["GET", "POST"])
+@signed_out_only
 def new_password():
     # Validate given token
     # Returns true if valid else returns error message
