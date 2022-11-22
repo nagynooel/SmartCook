@@ -38,10 +38,11 @@ c = db.cursor(buffered=True)
 
 
 # -- Routes
+# Dashboard
 @app.route('/')
 @logged_in_only
 def index():
-    return error("Page unavailable!", code=404)
+    return render_template("dashboard.html")
 
 
 # - Login and new user functionality

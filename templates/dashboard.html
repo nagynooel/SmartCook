@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block body %}
+
+    <div id="dashboard-cont" class="page-cont">
+        
+        {% include "sidebar.html" %}
+        
+        <main class="content content-sidebar">
+            
+            <section class="center-cont text-center">
+                <h1 class="section-title">Dashboard</h1>
+                <h2 class="mb-2">Welcome back, {{ session["username"] }}!</h2>
+                <div class="btn-cont">
+                    <a href="/new_recipe" class="btn btn-lg btn-def btn-hover-light ms-2 me-2">New Recipe</a>
+                    <a href="/import_recipe" class="btn btn-lg btn-def btn-hover-light ms-2 me-2">Import Recipe</a>
+                </div>
+            </section>
+            
+            <section class="mt-5">
+                <h2 class="section-title text-center">Your recipes</h2>
+                <div class="text-center mb-4">
+                    <a href="/random_recipe" class="btn btn-lg btn-def btn-hover-light ms-2 me-2">Show me a random recipe</a>
+                </div>
+                
+                <h3 class="ms-3">Latest recipes:</h3>
+                <div class="recipe-cont">
+                    
+                    <!--Recipe template-->
+                    <!-- <div class="recipe">
+                        <div class="recipe-image-cropper">
+                            <img class="recipe-image" src="{{ url_for('static', filename='img/food.jpg') }}" alt="Recipe image">
+                        </div>
+                        <strong class="recipe-title">Recipe #1</strong>
+                        <p class="recipe-category">Main Dish</p>
+                        <a href="/recipe/{{ session['uid'] }}/test" class="btn btn-def btn-rev">Open recipe</a>
+                    </div> -->
+                    
+                </div>
+            </section>
+            
+        </main>
+        
+    </div>
+    
+{% endblock %}

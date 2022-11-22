@@ -31,6 +31,16 @@ body
         color: v.$primary
         outline-color: v.$primary
 
+.btn-rev
+    background-color: v.$secondary
+    color: white
+    
+    &:hover
+        background-color: v.$light
+
+.btn-hover-light:hover
+    background-color: v.$light
+
 // - Alert
 .alert
     width: fit-content
@@ -167,6 +177,17 @@ $top_nav_height: 51px
             #top-nav-profile
                 background-color: v.$light
 
+// - Containers
+.page-cont
+    margin-top: $top_nav_height
+    color: white
+
+// - Sections
+section
+    .section-title
+        &::before, &::after
+            content: " - "
+
 // - Sidebar
 $sidebar_width: 170px
 
@@ -201,6 +222,49 @@ $sidebar_width: 170px
 
 
 // -- Page specific styles
+// - Dashboard
+#dashboard-cont
+    display: block
+    
+    .center-cont
+        padding-top: 2rem
+        
+        .btn-cont a
+            // buttons collapse
+            margin-bottom: 1rem
+
+// Image width + 2 * padding
+$recipe_width: calc(200px + 2 * 1rem)
+
+.recipe-cont
+    display: grid
+    grid-template-columns: repeat(auto-fit, minmax($recipe_width,1fr))
+    gap: 20px
+    margin: 0 1rem
+    justify-items: left
+    
+    
+    .recipe
+        background-color: v.$primary
+        padding: 1rem
+        width: calc(200px + 2 * 1rem)
+        text-align: center
+        
+        .recipe-image
+            display: block
+            object-fit: cover
+            border-radius: 50%
+            height: 200px
+            width: 200px
+        
+        .recipe-title
+            font-size: 1.5rem
+
+@media only screen and ( max-width:  950px)
+    .recipe-cont
+        justify-items: center
+
+// - User authenticaton pages
 #register-cont, #login-cont, #reset-password-cont, #new-password-cont
     width: fit-content
     min-width: 400px
