@@ -1,8 +1,9 @@
 <div class="sidebar">
+    {% set url = url_for(request.endpoint) %}
     <ul>
-        <li><a class="active" href="/">Dashboard</a></li>
-        <li><a href="/new_recipe">Create New Recipe</a></li>
-        <li><a href="/import_recipe">Import Recipe</a></li>
-        <li><a href="/recipes">My Recipes</a></li>
+        <li><a {% if url == "/" %}class="active"{% endif %} href="/">Dashboard</a></li>
+        <li><a {% if url == "/new_recipe" %}class="active"{% endif %} href="/new_recipe">Create New Recipe</a></li>
+        <li><a {% if url == "/import_recipe" %}class="active"{% endif %} href="/import_recipe">Import Recipe</a></li>
+        <li><a {% if url == "/recipes" %}class="active"{% endif %} href="/recipes">My Recipes</a></li>
     </ul>
 </div>
