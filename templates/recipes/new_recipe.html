@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block body %}
+
+    <div id="new-recipe-cont" class="page-cont">
+        
+        {% include "sidebar.html" %}
+        
+        <main class="content content-sidebar recipe-form-cont">
+            <h1 class="text-center title">New Recipe</h1>
+            <div class="container mb-5">
+                <form action="/new_recipe" method="POST" enctype="multipart/form-data" class="form recipe-form">
+                    <div class="row">
+                        <div class="col-12 col-lg-6 mb-5">
+                            <div class="row">
+                                <h2>General recipe information:</h2>
+                                <div class="col-xl-12 col-xxl-6">
+                                    <div class="form-group text-center" id="recipe-image-container">
+                                        <div class="recipe-image-title w-100">Recipe Image</div>
+                                        <label for="image-file" id="recipe_image">
+                                            <input type="file" name="image-file" id="image-file" accept="image/png,image/jpg,image/jpeg,image/webp,image/avif"/>
+                                            <img src="{{ url_for('static', filename='img/no-image-selected.svg') }}" id="recipe-image" alt="Recipe Image"/>
+                                            <div class="upload-text"><span>Upload image</span></div>
+                                        </label>
+                                        <button class="btn btn-danger w-100" id="remove_image_btn">- Remove Image</button>
+                                    </div>
+                                </div>
+                                <div class="col-xl-12 col-xxl-6">
+                                    <div class="form-group">
+                                        <input type="text" name="title" id="title" placeholder="Recipe title *" maxlength="255" required autofocus>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <textarea name="description" id="description" placeholder="Description (optional)" maxlength="1000" rows="4"></textarea>
+                                    </div>
+                                    
+                                    <div class="form-group form-time form-flex flex-space-between">
+                                        <label for="prep_hour">Preparation time:</label>
+                                        <div class="time-fields">
+                                            <span><input type="number" name="prep_hour" id="prep_hour" min="0" max="99" required> h</span>
+                                            <span><input type="number" name="prep_minute" id="prep_minute" min="0" max="59" required> m</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group form-time form-flex flex-space-between">
+                                        <label for="cook_hour">Cook/Baking time:</label>
+                                        <div class="time-fields">
+                                            <span><input type="number" name="cook_hour" id="cook_hour" min="0" max="99" required> h</span>
+                                            <span><input type="number" name="cook_minute" id="cook_minute" min="0" max="59" required> m</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group form-serving form-flex">
+                                        <input type="number" name="serving" id="serving" value="1" min="0" step=".01" required><span>Serving(s)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="form-group mb-5">
+                                <h3>Ingredients:</h3>
+                                <p class="warning-text" id="ingredients-warning">At least one ingredient is required</p>
+                                <div id="ingredients-cont">
+                                </div>
+                                <button class="add-btn btn btn-def btn-hover-light" id="add_ingredient_btn">+ Add ingredient</button>
+                            </div>
+                            <h3>Steps:</h3>
+                            <p class="warning-text" id="steps-warning">At least one step is required</p>
+                            <div id="steps-cont">
+                            </div>
+                            <button class="add-btn btn btn-def btn-hover-light" id="add_step_btn">+ Add Step</button>
+                        </div>
+                        <div id="bottom-right-cont">
+                            <button class="btn btn-danger" id="clear_recipe">Clear recipe</button>
+                            <button type="submit" class="btn btn-def btn-hover-light">Create recipe</button>
+                        </div>
+                    </div>
+                </form>
+        </main>
+        
+    </div>
+
+{% endblock %}
+
+{% block pagescript %}
+    <script src="{{ url_for('static', filename='js/recipe_editor.js') }}"></script>
+{% endblock %}

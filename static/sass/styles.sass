@@ -15,12 +15,14 @@
 body
     background-color: v.$secondary
 
+.btn
+    border-radius: 0
+    font-weight: bold
+    text-transform: uppercase
+
 .btn-def
     background-color: v.$primary
     color: white
-    font-weight: bold
-    text-transform: uppercase
-    border-radius: 0
     
     &:hover
         background-color: v.$secondary
@@ -40,6 +42,12 @@ body
 
 .btn-hover-light:hover
     background-color: v.$light
+
+.title
+    padding: 1.5rem
+    
+    &::before, &::after
+        content: " - "
 
 // - Alert
 .alert
@@ -76,29 +84,43 @@ body
         .form-description
             margin: 0
     
-    .form
-        padding: 30px 15px
-        background-color: white
+
+.form
+    padding: 0 15px
+    
+    .form-group
+        margin-bottom: 15px
         
-        .form-group
-            margin-bottom: 15px
+        input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea
+            border: none
+            border-bottom: 1px solid v.$light
+            width: 100%
+            transition: border-bottom-color 0.5s
             
-            input[type="text"], input[type="email"], input[type="password"]
-                border: none
-                border-bottom: 1px solid v.$light
-                width: 100%
-                transition: border-bottom-color 0.5s
+            &::placeholder
+                color: v.$light
+            
+            &:focus
+                outline: none
+                border-bottom-color: v.$primary
                 
                 &::placeholder
-                    color: v.$light
-                
-                &:focus
-                    outline: none
-                    border-bottom-color: v.$primary
-                    
-                    &::placeholder
-                        transition: color 0.5s
-                        color: v.$primary
+                    transition: color 0.5s
+                    color: v.$primary
+        
+        input[type="number"]
+            -moz-appearance: textfield
+            
+            &::-webkit-outer-spin-button, &::-webkit-inner-spin-button
+                -webkit-appearance: none
+                margin: 0
+        
+        &.form-flex, .form-flex
+            display: flex
+            gap: 1rem
+        
+        &.flex-space-between, .flex-space-between
+            justify-content: space-between
         
         .form-submit-cont
             text-align: right
@@ -124,6 +146,8 @@ $top_nav_height: 51px
     
     color: white
     background-color: v.$primary
+    
+    z-index: 98
     
     .navbar-brand
         font-weight: bold
@@ -181,12 +205,6 @@ $top_nav_height: 51px
 .page-cont
     margin-top: $top_nav_height
     color: white
-
-// - Sections
-section
-    .section-title
-        &::before, &::after
-            content: " - "
 
 // - Sidebar
 $sidebar_width: 170px
@@ -264,6 +282,132 @@ $recipe_width: calc(200px + 2 * 1rem)
     .recipe-cont
         justify-items: center
 
+// - Recipe pages
+.recipe-form
+    #remove_image_btn
+        display: none
+    
+    .recipe-image-title
+        background-color: v.$primary
+        padding: 6px
+        text-transform: uppercase
+        font-weight: bold
+    
+    #recipe-image-container
+        background-color: v.$primary
+    
+    #recipe_image
+        position: relative
+        
+        
+        input[type="file"]
+            display: none
+        
+        img
+            background-color: v.$primary
+            width: 100% !important
+            aspect-ratio: 1 / 1
+            object-fit: cover
+            z-index: 0
+        
+        .upload-text
+            display: none
+        
+            span
+                position: absolute
+                top: 50%
+                left: 50%
+                transform: translate(-50%, -50%)
+                
+                font-size: 1.2rem
+                font-weight: bold
+        
+        &:hover
+            cursor: pointer
+            
+            .upload-text
+                display: block
+                background-color: v.$primary_transparent
+                position: absolute
+                top: 0
+                left: 0
+                width: 100%
+                height: 100%
+    
+    input, textarea
+        background-color: v.$primary
+        padding: 0.5rem
+        color: white
+        border: none !important
+        
+        &::placeholder
+            color: v.$light !important
+        
+        &:focus::placeholder
+            color: v.$light !important
+    
+    textarea
+        min-height: 2.5rem
+        height: 2.5rem
+        overflow: hidden
+        resize: none
+        box-sizing: border-box
+    
+    textarea[name="description"]
+        min-height: 8rem
+    
+    .form-serving, .form-time
+        background-color: v.$primary
+        padding: 0.5rem
+        
+        input[type="number"]
+            width: 2em !important
+            text-align: right
+            padding: 0
+    
+    .warning-text
+        color: #dc3545
+        font-weight: bold
+        display: none
+    
+    #ingredients-cont
+        .ingredient
+            background-color: v.$primary
+            
+            .quantity
+                width: 5rem
+            
+            select
+                background-color: v.$primary
+                color: white
+                border: none
+    
+    #steps-cont .step
+        gap: 0 !important
+        
+        .step-number
+            display: inline-block
+            width: 3rem
+            height: 2.5rem
+            text-align: center
+            padding: 0.5rem 0
+            background-color: v.$primary
+        
+        button
+            height: 2.5rem
+    
+    .remove-btn
+        padding: 0 10px
+    
+    #bottom-right-cont
+        position: fixed
+        bottom: 1rem
+        right: 1rem
+        width: fit-content
+        button
+            width: fit-content
+
+
 // - User authenticaton pages
 #register-cont, #login-cont, #reset-password-cont, #new-password-cont
     width: fit-content
@@ -275,6 +419,9 @@ $recipe_width: calc(200px + 2 * 1rem)
     box-shadow: 5px 5px v.$primary_transparent
     -webkit-box-shadow: 5px 5px v.$primary_transparent
     -moz-box-shadow: 5px 5px v.$primary_transparent
+    
+    .form
+        background-color: white
 
 @media only screen and (max-width: v.$small)
     #register-cont, #login-cont, #reset-password-cont, #new-password-cont
