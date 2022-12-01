@@ -14,14 +14,16 @@ from functools import wraps
 from re import match
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from os import environ
+from os import environ, path
 from email.message import EmailMessage
 import smtplib, ssl
 
 from datetime import datetime, timezone
 
+
 # -- Global variables
 encryption_method = "pbkdf2:sha256:120000"
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "avif", "gif"}
 
 
 # -- Error handling
@@ -56,6 +58,15 @@ def signed_out_only(f):
 def redirect_alert(redirect_to: str, alert_msg:str, alert_type="danger"):
     flash(alert_msg, "alert-" + alert_type)
     return redirect(redirect_to)
+
+# Get the extension from the file name and check if it is allowed (for images)
+def allowed_image_extension(filename):
+    exstension = path.splitext(filename)[1][1:]
+    return exstension in ALLOWED_IMAGE_EXTENSIONS
+
+# Get the extension from the filename (includes the '.' character)
+def get_file_extension(filename):
+    return path.splitext(filename)[1]
 
 # Create email message object
 def create_msg(receiver: str, subject: str, plain: str, html: str):

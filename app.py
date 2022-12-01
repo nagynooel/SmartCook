@@ -10,11 +10,15 @@ from flask import Flask, render_template, redirect, flash, request, session
 from flask_session import Session
 
 import mysql.connector
-from os import environ
+from os import environ, path
 
 from secrets import token_urlsafe
 
-from helper import error, logged_in_only, signed_out_only, redirect_alert, validate_email, generate_hash, check_hash, create_msg, send_email, check_expiration
+from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_image_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, check_expiration
+from werkzeug.utils import secure_filename
+
+# -- Globale variables
+ALLOWED_MEASUREMENTS = ["g","dag","kg","cup","pinch","pc(s)"]
 
 # -- Configure application
 app = Flask(__name__)
@@ -25,6 +29,10 @@ app.secret_key = environ.get("APP_SECRET_KEY")
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
+
+# - Image Upload
+app.config['UPLOAD_FOLDER'] = "./static/user_uploads/"
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
 
 # - Database connection
 db = mysql.connector.connect(
@@ -43,6 +51,155 @@ c = db.cursor(buffered=True)
 @logged_in_only
 def index():
     return render_template("dashboard.html")
+
+
+# - Recipe functions
+# Create new recipe
+@app.route('/new_recipe', methods=["GET", "POST"])
+@logged_in_only
+def new_recipe():
+    # -- POST request
+    if request.method == "POST":
+        # - Get user input
+        title = request.form.get("title")
+        description = request.form.get("description")
+        
+        # Throw error if number fields are not numbers
+        try:
+            prep_hour = int(request.form.get("prep_hour"))
+            prep_minute = int(request.form.get("prep_minute"))
+            cook_hour = int(request.form.get("cook_hour"))
+            cook_minute = int(request.form.get("cook_minute"))
+            
+            serving = int(request.form.get("serving"))
+        except:
+            return redirect_alert("/new_user", "Please input only numbers to number fields!")
+        
+        ingredients = []
+        
+        # Get all data of the ingredients and validate them
+        for quantity in request.form.getlist("quantity"):
+            if not quantity or not quantity.isnumeric():
+                return redirect_alert("/new_recipe", "Please write only numeric characters in quantity fields!")
+            
+            ingredients.append({"quantity":quantity})
+        
+        for i, measurement in enumerate(request.form.getlist("measurement")):
+            if measurement not in ALLOWED_MEASUREMENTS:
+                return redirect_alert("/new_recipe", "Measurement not allowed!")
+            
+            ingredients[i]["measurement"] = measurement
+        
+        for i, ingredient_name in enumerate(request.form.getlist("ingredient-name")):
+            if not ingredient_name:
+                return redirect_alert("/new_recipe", "Please fill out all required fields!")
+            if len(ingredient_name) > 100:
+                return redirect_alert("/new_recipe", "Ingredient name too long! (Maximum 100 characters per ingredient name is allowed.)")
+            
+            ingredients[i]["ingredient-name"] = ingredient_name
+        
+        instructions = []
+        
+        # Get steps and validate them
+        for i, instruction in enumerate(request.form.getlist("step-text")):
+            if not instruction:
+                return redirect_alert("/new_recipe", "Please fill out all required fields!")
+            if len(instruction) > 1000:
+                return redirect_alert("/new_recipe", "Instruction too long! (Maximum 1000 characters per instruction is allowed.)")
+            
+            instructions.append({"number":i+1, "instruction":instruction})
+        
+        # - Validate inputs
+        # Validate: all required fields are filled out
+        if not title or prep_hour is None or prep_minute is None or cook_hour is None or cook_minute is None or serving is None:
+            return redirect_alert("/new_recipe", "Please fill out all required fields!")
+        
+        # Validate: title and description not longer than allowed (255 and 1000 char respectively)
+        if len(title) > 255 or len(description) > 1000:
+            return redirect_alert("/new_recipe", "Title or description is longer than allowed!")
+        
+        # Validate: correct time format
+        if not 0 <= prep_hour <= 99 or not 0 <= cook_hour <= 99 or not 0 <= prep_minute <= 59 or not 0 <= cook_minute <= 59:
+            return redirect_alert("/new_recipe", "Please enter a valid preparation and cook time!")
+        
+        # Check: if recipe image was uploaded (optional)
+        # Validate: exstension is allowed
+        
+        # possible values:
+        # False = no file uploaded or file did not meet requirements
+        # File object = image is uploaded and meets requirements
+        recipe_image = False
+        
+        if "image-file" in request.files and request.files['image-file'].filename != "":
+            # Save image to variable
+            recipe_image = request.files['image-file']
+            
+            # Secure filename
+            recipe_image.filename = secure_filename(recipe_image.filename)
+            
+            if not allowed_image_extension(recipe_image.filename):
+                return redirect_alert("/new_recipe", "Image file extension not allowed.")
+        
+        # - Create recipe
+        # Recipes Table
+        # Create recipe in database
+        try:
+            c.execute("INSERT INTO recipes (user_id, title, description, preparation_time, cook_time, servings) VALUES (%s, %s, %s, %s, %s, %s);", (session["uid"], title, description, f"{str(prep_hour).zfill(2)}{str(prep_minute).zfill(2)}", f"{str(cook_hour).zfill(2)}{str(cook_minute).zfill(2)}", serving))
+            c.execute("SELECT LAST_INSERT_ID();")
+            
+            recipe_id = c.fetchone()[0]
+            
+            # Create ingredients, measurement units and link ingredients with recipe (via recipe_ingredients table)
+            for ingredient in ingredients:
+                # Get ingredient id (and upload ingredient if not in database)
+                ing_name = ingredient["ingredient-name"]
+                c.execute("SELECT id FROM ingredients WHERE name = %s;", (ing_name,))
+                
+                ing_id = c.fetchone()
+                if not ing_id:
+                    c.execute("INSERT INTO ingredients (name) VALUES (%s);", (ing_name,))
+                    c.execute("SELECT LAST_INSERT_ID();")
+                    ing_id = c.fetchone()[0]
+                else:
+                    ing_id = ing_id[0]
+                
+                # Get measurement id (and upload measurement if not in database)
+                ing_measurement = ingredient["measurement"]
+                c.execute("SELECT id FROM measurement_units WHERE unit = %s;", (ing_measurement,))
+                
+                measurement_id = c.fetchone()
+                if not measurement_id:
+                    c.execute("INSERT INTO measurement_units (unit) VALUES (%s);", (ing_measurement,))
+                    c.execute("SELECT LAST_INSERT_ID();")
+                    measurement_id = c.fetchone()[0]
+                else:
+                    measurement_id = measurement_id[0]
+                
+                # Link ingredient with recipe (recipe_ingredients table)
+                c.execute("INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, measurement_id) VALUES (%s, %s, %s, %s);", (recipe_id, ing_id, ingredient["quantity"], measurement_id))
+                
+            
+            # Create instructions in database
+            for instruction in instructions:
+                c.execute("INSERT INTO instructions (recipe_id, step_number, instruction) VALUES (%s, %s, %s);", (recipe_id, instruction["number"], instruction["instruction"]))
+            
+            # If image was uploaded save it to /user-uploads/recipe_images/ with the recipe id as filename
+            if recipe_image != False:
+                recipe_image.filename = str(recipe_id) + get_file_extension(recipe_image.filename)
+                recipe_image.save(path.join(app.config['UPLOAD_FOLDER'] + "recipe_images/", recipe_image.filename))
+            
+            db.commit()
+            
+        except Exception as e:
+            # If any part of the upload goes wrong roll back to last commit in database
+            db.rollback()
+            return error(f"Something went wrong with uploading your recipe to our database! Error: {e}", code=500)
+        
+        
+        return redirect_alert(f"/recipes/{recipe_id}", "Recipe successfully created!", "success")
+        
+    # -- GET request
+    return render_template("recipes/new_recipe.html")
 
 
 # - Login and new user functionality
