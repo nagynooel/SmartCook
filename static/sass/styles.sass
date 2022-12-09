@@ -283,6 +283,13 @@ $recipe_width: calc(200px + 2 * 1rem)
         justify-items: center
 
 // - Recipe pages
+#recipe-image
+    background-color: v.$primary
+    width: 100% !important
+    aspect-ratio: 1 / 1
+    object-fit: cover
+    z-index: 0
+
 .recipe-form
     padding-top: 0
     
@@ -298,19 +305,13 @@ $recipe_width: calc(200px + 2 * 1rem)
     #recipe-image-container
         background-color: v.$primary
     
-    #recipe_image
+    #recipe_image_lbl
         position: relative
-        
         
         input[type="file"]
             display: none
         
-        img
-            background-color: v.$primary
-            width: 100% !important
-            aspect-ratio: 1 / 1
-            object-fit: cover
-            z-index: 0
+    
         
         .upload-text
             display: none
@@ -408,6 +409,38 @@ $recipe_width: calc(200px + 2 * 1rem)
         width: fit-content
         button
             width: fit-content
+
+.inline-span
+    display: inline-block
+    height: 2rem
+    text-align: left
+    padding: 0.25rem 0
+    background-color: v.$primary
+
+// View recipe
+#view-recipe-cont
+    padding: 1.75rem
+    padding-top: 0
+    
+    #recipe-general
+        background-color: v.$primary
+        padding: 0.5rem
+    
+    #ingredients-cont, #steps-cont
+        .ingredient, .step
+            background-color: v.$primary
+            padding: 0.5rem
+            margin: 1rem 0
+            
+            .quantity
+                width: 3rem
+            
+            .unit
+                width: 4rem
+            
+            .step-number
+                width: 2rem
+                text-align: center
 
 
 // - User authenticaton pages

@@ -6,16 +6,18 @@
 """
 # --- Main app routing file
 
-from flask import Flask, render_template, redirect, flash, request, session
+from flask import Flask, render_template, redirect, flash, request, session, url_for
 from flask_session import Session
 
 import mysql.connector
 from os import environ, path
+from glob import glob
 
 from secrets import token_urlsafe
 
-from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_image_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, check_expiration
+from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_image_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, check_expiration, remove_leading_zeros
 from werkzeug.utils import secure_filename
+
 
 # -- Globale variables
 ALLOWED_MEASUREMENTS = ["g","dag","kg","cup","pinch","pc(s)"]
@@ -24,6 +26,9 @@ ALLOWED_MEASUREMENTS = ["g","dag","kg","cup","pinch","pc(s)"]
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.secret_key = environ.get("APP_SECRET_KEY")
+
+# Register filter to remove leading 0
+app.jinja_env.filters["no_leading_zero"] = remove_leading_zeros
 
 # - Session
 app.config["SESSION_PERMANENT"] = False
@@ -200,6 +205,81 @@ def new_recipe():
         
     # -- GET request
     return render_template("recipes/new_recipe.html")
+
+# Show recipe with the given id
+@app.route("/recipes/<int:recipe_id>")
+def recipe(recipe_id):
+    # - Validate id
+    # Validate: ID is given
+    if not recipe_id:
+        return redirect("/recipes")
+    
+    c.execute("SELECT user_id FROM recipes WHERE id = %s;", (recipe_id,))
+    # Validate: recipe exists and is created by current user
+    recipe_user_id = c.fetchone()
+    
+    if not recipe_user_id:
+        return redirect_alert("/recipes", "Recipe with given id does not exist!")
+    
+    if recipe_user_id[0] != session["uid"]:
+        return redirect_alert("/recipes", "You don't have access to the recipe with given id!")
+    
+    # - Get needed information of the recipe from the database
+    # General recipe information
+    c.execute("SELECT title, description, preparation_time, cook_time, servings FROM recipes WHERE id = %s;", (recipe_id,))
+    query = c.fetchone()
+    
+    title = query[0]
+    description = "None" if query[1] == "" else query[1]
+    preparation_time = query[2]
+    cook_time = query[3]
+    servings = query[4]
+    
+    # Get image if it was uploaded else put no-image-selected.svg
+    recipe_image = "img/no-image-selected.svg"
+    
+    if glob(f"{app.config['UPLOAD_FOLDER']}recipe_images/{recipe_id}.*"):
+        extension = path.splitext(glob(f"{app.config['UPLOAD_FOLDER']}recipe_images/{recipe_id}.*")[0])[1]
+        recipe_image = f"user_uploads/recipe_images/{recipe_id}{extension}"
+    
+    # Ingredients
+    c.execute("SELECT ingredient_id, quantity, measurement_id FROM recipe_ingredients WHERE recipe_id = %s;", (recipe_id,))
+    query = c.fetchall()
+    
+    ingredients = []
+    
+    for ingredient in query:
+        ingredient_id = ingredient[0]
+        ingredient_quantity = ingredient[1]
+        ingredient_measurement_id = ingredient[2]
+        
+        temp_ingredient = {}
+        
+        temp_ingredient["quantity"] = ingredient_quantity
+        
+        c.execute("SELECT name FROM ingredients WHERE id = %s;", (ingredient_id,))
+        temp_ingredient["name"] = c.fetchone()[0]
+        
+        c.execute("SELECT unit FROM measurement_units WHERE id = %s;", (ingredient_measurement_id,))
+        temp_ingredient["unit"] = c.fetchone()[0]
+        
+        ingredients.append(temp_ingredient)
+    
+    # instructions
+    c.execute("SELECT step_number, instruction FROM instructions WHERE recipe_id = %s;", (recipe_id,))
+    query = c.fetchall()
+    
+    instructions = []
+    
+    for instruction in query:
+        temp_instruction = {}
+        
+        temp_instruction["step_number"] = instruction[0]
+        temp_instruction["instruction"] = instruction[1]
+        
+        instructions.append(temp_instruction)
+    
+    return render_template("recipes/recipe_viewer.html", title=title, description=description, prep_time=preparation_time, cook_time=cook_time, servings=servings, recipe_image=recipe_image, ingredients=ingredients, instructions=instructions)
 
 
 # - Login and new user functionality

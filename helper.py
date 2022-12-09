@@ -52,6 +52,13 @@ def signed_out_only(f):
     return decorated_function
 
 
+# -- Filters
+# Remove leading 0s from string and return 0 if string is only 0
+def remove_leading_zeros(value):
+    value = value.lstrip("0")
+    return "0" if value == "" else value
+
+
 # -- Functions
 # - Global
 # Redirect user with an alert

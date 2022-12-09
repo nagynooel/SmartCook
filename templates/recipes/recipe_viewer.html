@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+
+{% block title %} {{ title }} {% endblock %}
+
+{% block body %}
+
+    <div id="view-recipe-cont" class="page-cont">
+        
+        {% include "sidebar.html" %}
+        
+        <main class="content content-sidebar recipe-form-cont">
+            <h1 class="text-center title">{{ title }}</h1>
+            
+            <div class="row">
+                <div class="col-12 col-lg-6 mb-5">
+                    <div id="recipe-image-container">
+                        <img id="recipe-image" src="{{ url_for('static', filename=recipe_image) }}" alt="Recipe image">
+                    </div>
+                    <div id="recipe-general">
+                        <p><strong>Description:</strong><br/> {{ description }}</p>
+                        <p><strong>Preparation time:</strong> {{ prep_time[:2] | no_leading_zero }} h {{ prep_time[2:] | no_leading_zero }} m</p>
+                        <p><strong>Cook time:</strong> {{ cook_time[:2] | no_leading_zero }} h {{ cook_time[2:] | no_leading_zero }} m</p>
+                        <p><strong>Servings:</strong> {{ servings }}</p>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 mb-5">
+                    <h3>Ingredients:</h3>
+                    <div id="ingredients-cont" class="mb-5">
+                        {% for ingredient in ingredients %}
+                            <div class="ingredient">
+                                <span class="quantity inline-span">{{ ingredient["quantity"] }}</span>
+                                <span class="unit inline-span">{{ ingredient["unit"] }}</span>
+                                {{ ingredient["name"] }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <h3>Steps:</h3>
+                    <div id="steps-cont">
+                        {% for instruction in instructions %}
+                            <div class="step">
+                                <span class="step-number inline-span">{{ instruction["step_number"] }}.</span>
+                                {{ instruction["instruction"] }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+        
+    </div>
+
+{% endblock %}
