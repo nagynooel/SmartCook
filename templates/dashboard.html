@@ -26,19 +26,7 @@
                 </div>
                 
                 <h3 class="ms-3">Latest recipes:</h3>
-                <div class="recipe-cont">
-                    
-                    <!--Recipe template-->
-                    <!-- <div class="recipe">
-                        <div class="recipe-image-cropper">
-                            <img class="recipe-image" src="{{ url_for('static', filename='img/food.jpg') }}" alt="Recipe image">
-                        </div>
-                        <strong class="recipe-title">Recipe #1</strong>
-                        <p class="recipe-category">Main Dish</p>
-                        <a href="/recipe/{{ session['uid'] }}/test" class="btn btn-def btn-rev">Open recipe</a>
-                    </div> -->
-                    
-                </div>
+                {% include "recipes/list_recipes.html" %}
             </section>
             
         </main>
@@ -49,4 +37,5 @@
 
 {% block pagescript %}
     <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/delete_recipe.js') }}"></script>
 {% endblock %}

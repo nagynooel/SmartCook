@@ -1,0 +1,54 @@
+<div id="recipes_container">
+    {% if not recipes %}
+    
+        <p>You have no recipes yet!</p>
+    
+    {% else %}
+    
+        {% for recipe in recipes %}
+            <div class="recipe">
+                
+                <div class="left">
+                    {% if glob("." + url_for("static", filename="user_uploads/recipe_images/" + recipe[0]|string + ".*")) %}
+                        <img src="{{ url_for('static', filename='user_uploads/recipe_images/' + recipe[0]|string + '.jpg') }}" alt="Recipe image">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/no-image-selected.svg') }}" alt="Recipe image">
+                    {% endif %}
+                    <div class="recipe-general-cont">
+                        <h3 class="recipe-title">{{ recipe[1] }}</h3>
+                        <strong class="recipe-desc-label">Description:</strong>
+                        <p class="recipe-description">
+                            {% if recipe[2] == "" %}
+                                No Description
+                            {% else %}
+                                {{ recipe[2] }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="recipe-time-cont">
+                    <table>
+                        <tr>
+                            <th>Prep Time:</th>
+                            <td>{{ recipe[3][:2] | int }} h {{ recipe[3][2:] | int }} m</td>
+                        </tr>
+                        <tr>
+                            <th>Cook/Bakeing Time:</th>
+                            <td>{{ recipe[4][:2] | int }} h {{ recipe[4][2:] | int }} m</td>
+                        </tr>
+                        <tr>
+                            <th>Total Time:</th>
+                            <td>{{ recipe[3][:2] | int + recipe[4][:2] | int  }} h {{ recipe[3][2:] | int + recipe[4][2:] | int  }} m</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="right">
+                    <a class="btn btn-def btn-hover-light" href="/recipes/{{ recipe[0] }}">View</a><a class="btn btn-danger" onclick="confirm_delete(event)" href="/remove/{{ recipe[0] }}?next=recipes">Delete</a>
+                </div>
+            </div>
+        {% endfor %}
+        
+    {% endif %}
+</div>

@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %} My recipes {% endblock %}
+
+{% block body %}
+
+    <div id="my-recipes-cont" class="page-cont">
+        
+        {% include "sidebar.html" %}
+        
+        <main class="content content-sidebar recipe-form-cont">
+            <h1 class="text-center title">My Recipes</h1>
+            
+            {% include "recipes/list_recipes.html" %}
+            
+        </main>
+        
+    </div>
+
+{% endblock %}
+
+{% block pagescript %}
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/delete_recipe.js') }}"></script>
+{% endblock %}

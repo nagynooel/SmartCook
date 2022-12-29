@@ -15,7 +15,7 @@ from glob import glob
 
 from secrets import token_urlsafe
 
-from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_image_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, check_expiration, remove_leading_zeros
+from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_image_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, list_all_recipes, remove_recipe, check_expiration, remove_leading_zeros
 from werkzeug.utils import secure_filename
 
 
@@ -50,12 +50,21 @@ db = mysql.connector.connect(
 c = db.cursor(buffered=True)
 
 
+# -- Handlers
+# Pass the glob function for every request
+@app.context_processor
+def handle_context():
+    return dict(glob=glob)
+
+
 # -- Routes
 # Dashboard
 @app.route('/')
 @logged_in_only
 def index():
-    return render_template("dashboard.html")
+    recipes = list_all_recipes(c)
+    
+    return render_template("dashboard.html", recipes=recipes)
 
 
 # - Recipe functions
@@ -206,8 +215,17 @@ def new_recipe():
     # -- GET request
     return render_template("recipes/new_recipe.html")
 
+# Show all of the users recipes (My Recipes page)
+@app.route("/recipes")
+@logged_in_only
+def show_all_recipes():
+    recipes = list_all_recipes(c)
+    
+    return render_template("recipes/my_recipes.html", recipes=recipes)
+
 # Show recipe with the given id
 @app.route("/recipes/<int:recipe_id>")
+@logged_in_only
 def recipe(recipe_id):
     # - Validate id
     # Validate: ID is given
@@ -280,6 +298,36 @@ def recipe(recipe_id):
         instructions.append(temp_instruction)
     
     return render_template("recipes/recipe_viewer.html", title=title, description=description, prep_time=preparation_time, cook_time=cook_time, servings=servings, recipe_image=recipe_image, ingredients=ingredients, instructions=instructions)
+
+@app.route("/remove/<int:recipe_id>")
+@logged_in_only
+def remove_recipe_page(recipe_id):
+    # Check if next url is givem
+    # Else set default (dashboard)
+    next = request.args.get("next")
+    
+    if not next:
+        next = ""
+    
+    # - Validate input
+    # Valdiate: recipe with given id exists
+    c.execute("SELECT user_id FROM recipes WHERE id = %s;", (recipe_id,))
+    
+    user_id = c.fetchone()
+    
+    if not user_id:
+        return redirect_alert("/" + next, "Recipe with given ID not found!")
+    
+    # Validate: recipe belongs to the user
+    user_id = user_id[0]
+    
+    if user_id != session["uid"]:
+        return redirect_alert("/" + next, "Recipe with given ID does not belong to user!")
+    
+    # Remove recipe
+    remove_recipe(c, db, recipe_id)
+    
+    return redirect_alert("/" + next, "Recipe deleted successfully!", "success")
 
 
 # - Login and new user functionality

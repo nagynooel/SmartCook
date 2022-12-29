@@ -101,6 +101,35 @@ def send_email(msg: EmailMessage):
             environ.get("SMTP_EMAIL"), msg["To"], msg.as_string()
         )
 
+
+# - Recipes
+# Returns a list containing all recipes by the user
+def list_all_recipes(c):
+    c.execute("SELECT id, title, description, preparation_time, cook_time FROM recipes WHERE user_id = %s ORDER BY creation_date DESC;", (session["uid"],))
+    
+    query = c.fetchall()
+    
+    if not query:
+        return None
+    
+    recipes = [list(recipe) for recipe in query]
+    
+    return recipes
+
+# Remove recipe with the given id from the database
+# Returns True if successful
+def remove_recipe(c, db, recipe_id: int):
+    try:
+        c.execute("DELETE FROM recipe_ingredients WHERE recipe_id = %s;", (recipe_id,))
+        c.execute("DELETE FROM instructions WHERE recipe_id = %s;", (recipe_id,))
+        c.execute("DELETE FROM recipes WHERE id = %s;", (recipe_id,))
+    except Exception as e:
+        return error(f"Something went wrong with removing the recipe from the database. Error: {e}", 500)
+    
+    db.commit()
+    return True
+
+
 # - Registration
 # Validate: email address format - returns bool
 def validate_email(email: str):
