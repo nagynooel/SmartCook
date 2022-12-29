@@ -17,7 +17,7 @@
                         <img id="recipe-image" src="{{ url_for('static', filename=recipe_image) }}" alt="Recipe image">
                     </div>
                     <div id="recipe-general">
-                        <p><strong>Description:</strong><br/> {{ description }}</p>
+                        <p class="recipe-description"><strong>Description:</strong><br/> {{ description }}</p>
                         <p><strong>Preparation time:</strong> {{ prep_time[:2] | no_leading_zero }} h {{ prep_time[2:] | no_leading_zero }} m</p>
                         <p><strong>Cook time:</strong> {{ cook_time[:2] | no_leading_zero }} h {{ cook_time[2:] | no_leading_zero }} m</p>
                         <p><strong>Servings:</strong> {{ servings }}</p>
@@ -44,6 +44,11 @@
                         {% endfor %}
                     </div>
                 </div>
+                
+                <div id="bottom-right-cont">
+                    <a class="btn btn-danger" onclick="confirm_delete(event)" href="/remove/{{ recipe_id }}?next=recipes">Delete recipe</a>
+                </div>
+                
             </div>
             
         </main>
@@ -54,4 +59,5 @@
 
 {% block pagescript %}
     <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/delete_recipe.js') }}"></script>
 {% endblock %}

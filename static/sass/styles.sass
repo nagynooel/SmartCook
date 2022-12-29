@@ -482,14 +482,15 @@ $recipe_width: calc(200px + 2 * 1rem)
     
     .remove-btn
         padding: 0 10px
+
+#bottom-right-cont
+    position: fixed
+    bottom: 1rem
+    right: 1rem
+    width: fit-content
     
-    #bottom-right-cont
-        position: fixed
-        bottom: 1rem
-        right: 1rem
+    button, a
         width: fit-content
-        button
-            width: fit-content
 
 .inline-span
     display: inline-block
@@ -506,6 +507,9 @@ $recipe_width: calc(200px + 2 * 1rem)
     #recipe-general
         background-color: v.$primary
         padding: 0.5rem
+        
+        .recipe-description
+            word-break: break-all
     
     #ingredients-cont, #steps-cont
         .ingredient, .step

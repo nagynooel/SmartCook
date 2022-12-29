@@ -297,7 +297,7 @@ def recipe(recipe_id):
         
         instructions.append(temp_instruction)
     
-    return render_template("recipes/recipe_viewer.html", title=title, description=description, prep_time=preparation_time, cook_time=cook_time, servings=servings, recipe_image=recipe_image, ingredients=ingredients, instructions=instructions)
+    return render_template("recipes/recipe_viewer.html", recipe_id=recipe_id, title=title, description=description, prep_time=preparation_time, cook_time=cook_time, servings=servings, recipe_image=recipe_image, ingredients=ingredients, instructions=instructions)
 
 @app.route("/remove/<int:recipe_id>")
 @logged_in_only
