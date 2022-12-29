@@ -18,6 +18,8 @@ from secrets import token_urlsafe
 from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_image_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, list_all_recipes, remove_recipe, check_expiration, remove_leading_zeros
 from werkzeug.utils import secure_filename
 
+from random import randint
+
 
 # -- Globale variables
 ALLOWED_MEASUREMENTS = ["g","dag","kg","cup","pinch","pc(s)"]
@@ -328,6 +330,22 @@ def remove_recipe_page(recipe_id):
     remove_recipe(c, db, recipe_id)
     
     return redirect_alert("/" + next, "Recipe deleted successfully!", "success")
+
+@app.route("/random_recipe")
+@logged_in_only
+def random_recipe():
+    # Validate: user has recipes
+    c.execute("SELECT id FROM recipes WHERE user_id = %s;", (session["uid"],))
+    
+    recipe_ids = c.fetchall()
+    
+    if not recipe_ids:
+        return redirect_alert("/", "You have no recipes yet!")
+    
+    # Generate a random number from 0 to the number of recipes user has
+    random_num = randint(0, len(recipe_ids) - 1)
+    
+    return redirect(f"/recipes/{ recipe_ids[random_num][0] }")
 
 
 # - Login and new user functionality
