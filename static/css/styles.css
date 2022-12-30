@@ -57,7 +57,7 @@ body {
   width: -moz-fit-content;
   width: fit-content;
   display: block;
-  position: absolute;
+  position: fixed;
   top: 10px;
   left: 50%;
   transform: translate(-50%, 0);

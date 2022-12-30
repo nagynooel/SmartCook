@@ -6,7 +6,7 @@
 """
 # --- Main app routing file
 
-from flask import Flask, render_template, redirect, flash, request, session, url_for
+from flask import Flask, render_template, redirect, flash, request, Response, session, url_for, stream_with_context
 from flask_session import Session
 
 import mysql.connector
@@ -15,7 +15,7 @@ from glob import glob
 
 from secrets import token_urlsafe
 
-from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, import_from_url, import_xml, new_recipe_get_request, list_all_recipes, remove_recipe, check_expiration, remove_leading_zeros
+from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, import_from_url, import_xml, new_recipe_get_request, generate_recipe_obj_from_db, list_all_recipes, remove_recipe, check_expiration, remove_leading_zeros
 from werkzeug.utils import secure_filename
 
 from random import randint
@@ -23,6 +23,8 @@ from random import randint
 from json import loads
 
 from bs4 import BeautifulSoup
+
+import io
 
 
 # -- Configure application
@@ -283,6 +285,20 @@ def new_recipe():
     # - Send parameters to front-end
     return render_template("recipes/new_recipe.html", paramaters_available=True, title=title, description=description, preptime=preptime, cooktime=cooktime, servings=servings, ingredients=ingredients, instructions=instructions)
 
+@app.route("/export_recipe/<int:recipe_id>")
+def export_recipe_page(recipe_id):
+    # Generate the recipe obj
+    recipe = generate_recipe_obj_from_db(c, recipe_id)
+    
+    # Validate: Recipe obejct is not empty
+    if not recipe:
+        return redirect_alert("/recipes", "Failed to export recipe!")
+    
+    # Stream the user the file
+    filename = f"{ recipe['title'] } - Smartcook.xml"
+    
+    return Response(stream_with_context(render_template("recipes/recipe.xml", recipe=recipe)), mimetype="text/xml", headers={'Content-disposition': f'attachment; filename={filename}'})
+
 # Import a recipe from file or url
 @app.route("/import_recipe", methods=["GET"])
 @logged_in_only
@@ -303,7 +319,7 @@ def import_from_url_page():
     recipe = import_from_url(url)
     
     if not recipe:
-        return redirect_alert("/import_recipes", "Recipe not found/Recipe format not supported!")
+        return redirect_alert("/import_recipe", "Recipe not found/Recipe format not supported!")
     
     # - Send GET request
     return redirect_alert(new_recipe_get_request(recipe), "Recipe imported successfully!", "success")

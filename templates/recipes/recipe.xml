@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <recipe>
     <general>
-        <title></title>
+        <title>{{ recipe["title"] }}</title>
         <description>
-        
+            {{ recipe["description"] }}
         </description>
         
-        <prepTime quantity="" />
-        <cookTime quantity="" />
-        <servings quantity="" />
+        <prepTime quantity="{{ recipe['preptime'] }}" />
+        <cookTime quantity="{{ recipe['cooktime'] }}" />
+        <servings quantity="{{ recipe['servings'] }}" />
     </general>
     
     <ingredients>
-        <ingredient quantity="" unit="" name=""/>
+        {% for ingredient in recipe['ingredients'] %}
+        <ingredient quantity="{{ ingredient['quantity'] }}" unit="{{ ingredient['unit'] }}" name="{{ ingredient['name'] }}"/>
+        {% endfor %}
     </ingredients>
     
     <instructions>
+        {% for instruction in recipe['instructions'] %}
         <instruction>
-            
+            {{ instruction[0] }}
         </instruction>
+        {% endfor %}
     </instructions>
 </recipe>

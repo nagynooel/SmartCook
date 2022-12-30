@@ -234,6 +234,67 @@ def new_recipe_get_request(recipe):
     
     return "/new_recipe" + get_request
 
+# Generates a recipe object from the database using the given cursor
+# Returns False if recipe not found
+def generate_recipe_obj_from_db(c, recipe_id: int):
+    # Get general recipe information
+    c.execute("SELECT title, description, preparation_time, cook_time, servings FROM recipes WHERE id = %s;", (recipe_id, ))
+    
+    query = c.fetchone()
+    
+    if not query:
+        return False
+    
+    # Feed general information into recipe object
+    recipe = {}
+    
+    tags = ["title", "description", "preptime", "cooktime", "servings"]
+    
+    for i, tag in enumerate(tags):
+        recipe[tag] = query[i]
+    
+    # Get ingredients
+    c.execute("SELECT recipe_ingredients.quantity, measurement_units.unit, ingredients.name FROM ((recipe_ingredients INNER JOIN ingredients ON recipe_ingredients.ingredient_id = ingredients.id) INNER JOIN measurement_units ON recipe_ingredients.measurement_id = measurement_units.id) WHERE recipe_ingredients.recipe_id = %s;", (recipe_id,))
+    
+    query = c.fetchall()
+    
+    if not query:
+        return False
+    
+    # Format ingredients into needed format (every ingredeint should be a dict)
+    tags = ["quantity", "unit", "name"]
+    ingredients = []
+    
+    temp = {}
+    for ingredient in query:
+        temp["quantity"] = ingredient[0]
+        temp["unit"] = ingredient[1]
+        temp["name"] = ingredient[2]
+        
+        ingredients.append(temp)
+        
+        temp = {}
+    
+    recipe["ingredients"] = ingredients
+    
+    # Get instructions
+    c.execute("SELECT instruction FROM instructions WHERE recipe_id = %s;", (recipe_id,))
+    
+    query = c.fetchall()
+    
+    if not query:
+        return False
+    
+    # Format instructions into needed format (string list)
+    instructions = []
+    
+    for instruction in query:
+        instructions.append(instruction)
+    
+    recipe["instructions"] = instructions
+    
+    return recipe
+
 # Returns a list containing all recipes by the user
 def list_all_recipes(c):
     c.execute("SELECT id, title, description, preparation_time, cook_time FROM recipes WHERE user_id = %s ORDER BY creation_date DESC;", (session["uid"],))
