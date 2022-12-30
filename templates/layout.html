@@ -37,14 +37,13 @@
         {% if session["uid"] and session["username"] %}
             <div class="nav-right">
                 <div id="top-nav-dropdown-cont">
-                    <a href="/profile" class="nav-link nav-link-image" id="top-nav-profile">
-                        <img class="me-1" src="{{ url_for('static', filename='img/no-profile-pic.svg') }}" alt="Profile Picture" width="30">
+                    <a class="nav-link nav-link-image" id="top-nav-profile">
+                        <img class="me-1" src="{{ url_for('static', filename=session['pfp']) }}" alt="Profile Picture" width="30">
                         {{ session['username'] }}
                     </a>
                     
                     <div id="top-nav-dropdown">
                         <ul>
-                            <li><a class="nav-link" href="/profile">Profile</a></li>
                             <li><a class="nav-link" href="/account">Account</a></li>
                             <li><a class="nav-link" href="/logout">Logout</a></li>
                         </ul>

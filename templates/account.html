@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %} Account Settings {% endblock %}
+
+{% block body %}
+
+    <div id="account-cont" class="page-cont">
+        
+        {% include "sidebar.html" %}
+        
+        <main class="content content-sidebar recipe-form-cont">
+            <h1 class="text-center title">Account Settings</h1>
+            
+            <div class="container mb-5">
+                <form action="/account" method="POST" enctype="multipart/form-data" class="form recipe-form">
+                    
+                    <div class="row">
+                        <div class="col-xl-12 col-xxl-6">
+                            <div class="form-group text-center" id="recipe-image-container">
+                                <div class="recipe-image-title w-100">Profile Picture</div>
+                                <label for="pfp" id="recipe_image_lbl">
+                                    <input type="file" name="pfp" id="pfp" value="{{ pfp_link }}" accept="image/png,image/jpg,image/jpeg,image/webp,image/avif"/>
+                                    <img src="{{ url_for('static', filename=pfp_src) }}" id="pfp-image" alt="Profile Picture"/>
+                                    <div class="upload-text"><span>Upload image</span></div>
+                                </label>
+                                <button class="btn btn-danger w-100" id="remove_image_btn">- Remove Image</button>
+                            </div>
+                        </div>
+                        <div class="col-xl-12 col-xxl-6">
+                            <div class="form-group">
+                                <input type="text" name="username" id="username" placeholder="Username" value="{{ session['username'] }}" maxlength="20" required autofocus>
+                            </div>
+                            
+                            <div class="form-group">
+                                <input type="email" name="email" id="email" placeholder="Email" value="{{ email }}" maxlength="255" required autofocus>
+                            </div>
+                            
+                            <a class="btn btn-def btn-hover-light" href="/change_existing_password">Change Password</a>
+                            
+                            <p class="mt-2">Account created on: {{ creation_date }}</p>
+                        </div>
+                        <div id="bottom-right-cont">
+                            <button class="btn btn-danger">Terminate Account</button>
+                            <button type="submit" class="btn btn-def btn-hover-light">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            
+        </main>
+        
+    </div>
+
+{% endblock %}
+
+{% block pagescript %}
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/account.js') }}"></script>
+{% endblock %}

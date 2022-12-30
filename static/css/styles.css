@@ -190,6 +190,13 @@ body {
 #top-nav .nav-right .nav-link-image {
   padding: 10.5px 10px;
 }
+#top-nav .nav-right .nav-link-image img {
+  width: 30px;
+  height: 30px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 50%;
+}
 #top-nav .nav-right #top-nav-dropdown {
   position: relative;
   transition: opacity 0.1s ease-in;
@@ -362,7 +369,7 @@ body {
     justify-items: center;
   }
 }
-#recipe-image {
+#recipe-image, #pfp-image {
   background-color: hsl(0deg, 0%, 10.2%);
   width: 100% !important;
   aspect-ratio: 1/1;

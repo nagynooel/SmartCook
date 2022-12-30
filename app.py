@@ -10,7 +10,7 @@ from flask import Flask, render_template, redirect, flash, request, Response, se
 from flask_session import Session
 
 import mysql.connector
-from os import environ, path
+from os import environ, path, remove
 from glob import glob
 
 from secrets import token_urlsafe
@@ -482,6 +482,141 @@ def random_recipe():
     return redirect(f"/recipes/{ recipe_ids[random_num][0] }")
 
 
+# - Account page
+# Allows user to upload profile picture and change account data
+@app.route("/account", methods=["GET", "POST"])
+@logged_in_only
+def account():
+    uid = session["uid"]
+    
+    # -- POST method
+    if request.method == "POST":
+        # - Get user input
+        username = request.form.get("username")
+        email = request.form.get("email")
+        
+        # - Update profile picture
+        profile_picture = False
+        
+        # Delete old pfp if exists
+        if glob(f"{app.config['UPLOAD_FOLDER']}profile_pictures/{uid}.*"):
+            extension = path.splitext(glob(f"{app.config['UPLOAD_FOLDER']}profile_pictures/{uid}.*")[0])[1]
+            remove(f"{app.config['UPLOAD_FOLDER']}profile_pictures/{ uid }{ extension }")
+        
+        pfp = "img/no-profile-pic.svg"
+        
+        if "pfp" in request.files and request.files["pfp"].filename != "":
+            # Save image to variable
+            profile_picture = request.files['pfp']
+            
+            # Secure filename
+            profile_picture.filename = secure_filename(profile_picture.filename)
+            
+            if not allowed_extension(profile_picture.filename):
+                return redirect_alert("/new_recipe", "Image file extension not allowed.")
+            
+            # Upload profile picture
+            profile_picture.filename = str(uid) + get_file_extension(profile_picture.filename)
+            profile_picture.save(path.join(app.config['UPLOAD_FOLDER'] + "profile_pictures/", profile_picture.filename))
+            
+            pfp = f"user_uploads/profile_pictures/{profile_picture.filename}"
+        
+        session["pfp"] = pfp
+        
+        # - Get current user data from database
+        c.execute("SELECT username, email FROM users WHERE id = %s;", (uid,))
+        
+        old_username, old_email = c.fetchone()
+        
+        # - Update username if it has been changed
+        if old_username != username:
+            # Validate: Username does not already exist
+            c.execute("SELECT username FROM users WHERE UPPER(username) = %s;", (username.upper(),))
+            query = c.fetchone()
+            
+            if query is not None:
+                return redirect_alert(f"/account", "Username already exists!")
+            
+            session["username"] = username
+            c.execute("UPDATE users SET username = %s WHERE id = %s;", (username, uid))
+        
+        # - Update email if it has been changed
+        if old_email != email:
+            # Validate: Email not already in database
+            c.execute("SELECT email FROM users WHERE UPPER(email) = %s;", (email.upper(),))
+            query = c.fetchone()
+            
+            if query is not None:
+                db.rollback()
+                return redirect_alert(f"/account", "Email already in database!")
+            
+            c.execute("UPDATE users SET email = %s WHERE id = %s;", (email, uid))
+        
+        db.commit()
+        
+        return redirect_alert("/account", "Changes Saved", "success")
+    
+    # -- GET method
+    # - Get user email
+    c.execute("SELECT email, creation_date FROM users WHERE id = %s;", (uid,))
+    
+    email, creation_date = c.fetchone()
+    
+    # Get profile picture if it was uploaded else put no-image-selected.svg
+    profile_picture = "img/no-image-selected.svg"
+    custom_pfp = False
+    
+    if glob(f"{app.config['UPLOAD_FOLDER']}profile_pictures/{uid}.*"):
+        extension = path.splitext(glob(f"{app.config['UPLOAD_FOLDER']}profile_pictures/{uid}.*")[0])[1]
+        profile_picture = f"user_uploads/profile_pictures/{uid}{extension}"
+        custom_pfp = True
+    
+    return render_template("account.html", email=email, creation_date=creation_date, pfp_src=profile_picture, pfp_link=profile_picture if custom_pfp else "")
+
+# Generate a token and send user the reset email
+@app.route("/change_existing_password")
+@logged_in_only
+def change_existing_account_password():
+    # Get users email
+    c.execute("SELECT email FROM users WHERE id = %s;", (session["uid"],))
+    
+    email = c.fetchone()[0]
+    
+    # - Generate reset token and store it in the database
+    # Create uniqe token
+    unique = False
+    token = ""
+    
+    while not unique:
+        token = token_urlsafe(64)
+        
+        c.execute("SELECT token FROM password_reset_tokens WHERE token = %s;", (token,))
+        
+        if c.fetchone() is None:
+            unique = True
+    
+    # Insert token into database
+    try:
+        c.execute("INSERT INTO password_reset_tokens (token, user_id) VALUES (%s, %s);", (token, session["uid"]))
+        db.commit()
+    except Exception as e:
+        return error(f"Something went wrong with creating your reset token in our database! Error: {e}", code=500)
+    
+    c.execute("SELECT expiration_date FROM password_reset_tokens WHERE token = %s;", (token,))
+    expiration_date = c.fetchone()[0]
+    url = f"{request.url_root}new_password?token={token}"
+    
+    # - Send password reset email
+    try:
+        msg = create_msg(email, "Password Reset", render_template("email/reset_password.txt", username=session["username"], url=url, expiration_date=expiration_date), render_template("email/reset_password.html", username=session["username"], url=url, expiration_date=expiration_date))
+        
+        send_email(msg)
+    except Exception() as e:
+        return error(f"Something went wrong with sending you the password reset email! Error: {e}", code=500)
+    
+    return redirect_alert("/account", "Password reset email successfully sent!", "success")
+
+
 # - Login and new user functionality
 # Register new user
 @app.route("/register", methods=["GET","POST"])
@@ -586,6 +721,16 @@ def login():
         session["uid"] = uid
         session["username"] = username
         
+        # - Set profile picture
+        
+        pfp = "img/no-profile-pic.svg"
+        
+        if glob(f"{app.config['UPLOAD_FOLDER']}profile_pictures/{uid}.*"):
+            extension = path.splitext(glob(f"{app.config['UPLOAD_FOLDER']}profile_pictures/{uid}.*")[0])[1]
+            pfp = f"user_uploads/profile_pictures/{uid}{extension}"
+        
+        session["pfp"] = pfp
+        
         return redirect("/")
     
     # -- GET request
@@ -667,7 +812,6 @@ def reset_password():
 
 # Create new password
 @app.route("/new_password", methods=["GET", "POST"])
-@signed_out_only
 def new_password():
     # Validate given token
     # Returns true if valid else returns error message

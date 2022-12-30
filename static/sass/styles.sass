@@ -173,6 +173,12 @@ $top_nav_height: 51px
         
         .nav-link-image
             padding: 10.5px 10px
+            
+            img
+                width: 30px
+                height: 30px
+                object-fit: cover
+                border-radius: 50%
         
         #top-nav-dropdown
             position: relative
@@ -365,7 +371,7 @@ $recipe_width: calc(200px + 2 * 1rem)
         justify-items: center
 
 // - Recipe pages
-#recipe-image
+#recipe-image, #pfp-image
     background-color: v.$primary
     width: 100% !important
     aspect-ratio: 1 / 1
@@ -392,8 +398,6 @@ $recipe_width: calc(200px + 2 * 1rem)
         
         input[type="file"]
             display: none
-        
-    
         
         .upload-text
             display: none
