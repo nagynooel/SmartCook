@@ -11,7 +11,7 @@ from flask import render_template, redirect, flash, session
 from flask_session import Session
 from functools import wraps
 
-from re import match
+from re import match, sub
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from os import environ, path
@@ -19,6 +19,11 @@ from email.message import EmailMessage
 import smtplib, ssl
 
 from datetime import datetime, timezone
+
+import requests
+from bs4 import BeautifulSoup
+from json import loads
+from unicodedata import normalize
 
 
 # -- Global variables
@@ -67,9 +72,9 @@ def redirect_alert(redirect_to: str, alert_msg:str, alert_type="danger"):
     return redirect(redirect_to)
 
 # Get the extension from the file name and check if it is allowed (for images)
-def allowed_image_extension(filename):
+def allowed_extension(filename, allowed=ALLOWED_IMAGE_EXTENSIONS):
     exstension = path.splitext(filename)[1][1:]
-    return exstension in ALLOWED_IMAGE_EXTENSIONS
+    return exstension in allowed
 
 # Get the extension from the filename (includes the '.' character)
 def get_file_extension(filename):
@@ -103,6 +108,132 @@ def send_email(msg: EmailMessage):
 
 
 # - Recipes
+# Import a recipe from the given url
+# Returns False if unable to locate recipe
+def import_from_url(url):
+    # Send GET request to url and get all script tags with type ld+json
+    html_doc = requests.get(url).content
+    soup = BeautifulSoup(html_doc, 'html.parser')
+    content = soup.find_all("script", type="application/ld+json")
+    
+    # Search for the recipe style tag
+    for c in content:
+        c = c.string
+        if any(typ in c for typ in ['"@type":"Recipe"', '"@type": "Recipe"', '"@type":"recipe"', '"@type": "recipe"']):
+            content = c
+            break
+    
+    # Validate: Script tag exists
+    if not content:
+        return False
+    
+    # Get all information needed from the script tag
+    content = content.string
+    
+    soup = BeautifulSoup(content, 'html.parser')
+    content_inner = soup.find("script", type="application/ld+json")
+    
+    json = loads(content)
+    
+    recipe = {}
+    
+    # Append recipe dictionary if tag is defined
+    needed_tags = {"name":"title", "description":"description", "prepTime":"preptime", "cookTime":"cooktime", "recipeYield":"servings", "recipeIngredient":"ingredients", "recipeInstructions":"instructions"}
+    
+    for key in needed_tags:
+        if key in json:
+            recipe[needed_tags[key]] = json[key]
+    
+    # Validate: output dictionary is not empty
+    if not recipe:
+        return False
+    
+    # Change & symbol to %26 to work with GET arguments
+    if "title" in recipe and recipe["title"] != None:
+        recipe["title"] = recipe["title"].replace('&', '%26')
+    
+    if "description" in recipe and recipe["description"] != None:
+        recipe["description"] = recipe["description"].replace('&', '%26')
+    
+    # If prep and cook times are available change them to the applications format (hhmm)
+    def format_time(key):
+        if key in recipe:
+            current_format = recipe[key].replace("PT", "")
+            
+            time = ""
+            x = ""
+            for c in current_format:
+                if c == 'H':
+                    time = x.zfill(2)
+                    x = ""
+                elif c == 'M':
+                    if time == "":
+                        time = f"00{x.zfill(2)}"
+                    else:
+                        time += x
+                        x = ""
+                else:
+                    x += c
+            
+            recipe[key] = time
+    
+    format_time("preptime")
+    format_time("cooktime")
+    
+    return recipe
+
+# Import recipe from xml
+def import_xml(file_object):
+    # Read the XML file and extract all necessary data
+    # Uses templates/recipes/recipe.xml as template
+    soup = BeautifulSoup(file_object.read(), "xml")
+    recipe = {}
+    
+    # Get general values
+    tags = ["title", "description"]
+    
+    for tag in tags:
+        element = soup.find(tag)
+        
+        if element != None:
+            recipe[tag] = sub("\n +", "\n", sub(" +", " ", element.text.strip()))
+    
+    tags = ["prepTime", "cookTime", "servings"]
+    
+    for tag in tags:
+        element = soup.find(tag)
+        
+        if element != None:
+            recipe[tag.lower()] = sub(" +", " ", element.get("quantity").strip())
+    
+    # Get ingredients
+    ingredients = soup.find_all("ingredient")
+    
+    if ingredients != None:
+        recipe["ingredients"] = []
+        for ingredient in ingredients:
+            recipe["ingredients"].append({"quantity":ingredient.get("quantity"), "unit":ingredient.get("unit"), "name":ingredient.get("name")})
+    
+    # Get instructions
+    instructions = soup.find_all("instruction")
+    
+    if instructions != None:
+        recipe["instructions"] = []
+        for instruction in instructions:
+            recipe["instructions"].append(sub("\n +", "\n",sub(" +", " ", instruction.text.strip())))
+    
+    return recipe
+
+# Generate the redirect url for the new recipe page with the given parameters
+def new_recipe_get_request(recipe):
+    # Format the get request with the given parameters
+    get_request = "?"
+    
+    for key in recipe:
+        get_request += f"{key}={recipe[key]}&"
+    
+    return "/new_recipe" + get_request
+
 # Returns a list containing all recipes by the user
 def list_all_recipes(c):
     c.execute("SELECT id, title, description, preparation_time, cook_time FROM recipes WHERE user_id = %s ORDER BY creation_date DESC;", (session["uid"],))

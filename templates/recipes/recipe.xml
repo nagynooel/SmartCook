@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<recipe>
+    <general>
+        <title></title>
+        <description>
+        
+        </description>
+        
+        <prepTime quantity="" />
+        <cookTime quantity="" />
+        <servings quantity="" />
+    </general>
+    
+    <ingredients>
+        <ingredient quantity="" unit="" name=""/>
+    </ingredients>
+    
+    <instructions>
+        <instruction>
+            
+        </instruction>
+    </instructions>
+</recipe>

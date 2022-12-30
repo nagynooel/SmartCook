@@ -15,14 +15,15 @@ from glob import glob
 
 from secrets import token_urlsafe
 
-from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_image_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, list_all_recipes, remove_recipe, check_expiration, remove_leading_zeros
+from helper import error, logged_in_only, signed_out_only, redirect_alert, allowed_extension, get_file_extension, validate_email, generate_hash, check_hash, create_msg, send_email, import_from_url, import_xml, new_recipe_get_request, list_all_recipes, remove_recipe, check_expiration, remove_leading_zeros
 from werkzeug.utils import secure_filename
 
 from random import randint
 
+from json import loads
 
-# -- Globale variables
-ALLOWED_MEASUREMENTS = ["g","dag","kg","cup","pinch","pc(s)"]
+from bs4 import BeautifulSoup
+
 
 # -- Configure application
 app = Flask(__name__)
@@ -101,9 +102,6 @@ def new_recipe():
             ingredients.append({"quantity":quantity})
         
         for i, measurement in enumerate(request.form.getlist("measurement")):
-            if measurement not in ALLOWED_MEASUREMENTS:
-                return redirect_alert("/new_recipe", "Measurement not allowed!")
-            
             ingredients[i]["measurement"] = measurement
         
         for i, ingredient_name in enumerate(request.form.getlist("ingredient-name")):
@@ -153,7 +151,7 @@ def new_recipe():
             # Secure filename
             recipe_image.filename = secure_filename(recipe_image.filename)
             
-            if not allowed_image_extension(recipe_image.filename):
+            if not allowed_extension(recipe_image.filename):
                 return redirect_alert("/new_recipe", "Image file extension not allowed.")
         
         # - Create recipe
@@ -215,7 +213,127 @@ def new_recipe():
         return redirect_alert(f"/recipes/{recipe_id}", "Recipe successfully created!", "success")
         
     # -- GET request
-    return render_template("recipes/new_recipe.html")
+    # - Get request arguments
+    title = request.args.get("title")
+    description = request.args.get("description")
+    preptime = request.args.get("preptime")
+    cooktime = request.args.get("cooktime")
+    servings = request.args.get("servings")
+    ingredients_raw = request.args.get("ingredients")
+    instructions_raw = request.args.get("instructions")
+    
+    # - Validate: at least one argument is given
+    if not title and not description and not preptime and not cooktime and not servings and not ingredients_raw and not instructions_raw:
+        return render_template("recipes/new_recipe.html")
+    
+    # - Format the ingredients list
+    ingredients = []
+    
+    if ingredients_raw is not None:
+        ingredients_raw = loads(ingredients_raw.replace("\'", "\""))
+        
+        # Check if list is already in correct format
+        if type(ingredients_raw[0]) is dict:
+            ingredients = ingredients_raw
+        else:
+            for ingredient in ingredients_raw:
+                ingredient = ingredient.strip()
+                
+                ingredient_obj = {}
+                temp = ""
+                
+                # Get the different parts of the ingredient
+                for ch in ingredient:
+                    if "quantity" not in ingredient_obj:
+                        if not ch.isnumeric() and ch not in [" ", "/", ".", ","]:
+                            # Make sure that . is used for decimal instead of ,
+                            temp = temp.strip().replace(",", ".")
+                            
+                            # Handle fractional numbers
+                            if "/" in temp:
+                                temp = temp.split("/")
+                                temp = round(int(temp[0]) / int(temp[1]), 2)
+                            
+                            ingredient_obj["quantity"] = str(temp)
+                            temp = ""
+                    elif "unit" not in ingredient_obj:
+                        if ch == " ":
+                            ingredient_obj["unit"] = temp.strip()
+                            temp = ""
+                    temp += ch
+                
+                ingredient_obj["name"] = temp.strip()
+                
+                ingredients.append(ingredient_obj)
+    
+    # - Format the instructions list
+    instructions = []
+    
+    if instructions_raw is not None:
+        instructions_raw = loads(instructions_raw.replace("\'", "\""))
+        
+        # Handle the 2 common formats
+        try:
+            for instruction in instructions_raw:
+                instructions.append(instruction["text"])
+        except:
+            for instruction in instructions_raw:
+                instructions.append(instruction)
+    
+    # - Send parameters to front-end
+    return render_template("recipes/new_recipe.html", paramaters_available=True, title=title, description=description, preptime=preptime, cooktime=cooktime, servings=servings, ingredients=ingredients, instructions=instructions)
+
+# Import a recipe from file or url
+@app.route("/import_recipe", methods=["GET"])
+@logged_in_only
+def import_recipe():
+    return render_template("recipes/import_recipe.html")
+
+# Import a recipe from a url
+@app.route("/import/url")
+@logged_in_only
+def import_from_url_page():
+    # - Get URL
+    url = request.args.get("url")
+    
+    if not url:
+        return redirect_alert("/import_recipe", "No url wass given!")
+    
+    # - Get the recipe dictionary using the helper function
+    recipe = import_from_url(url)
+    
+    if not recipe:
+        return redirect_alert("/import_recipes", "Recipe not found/Recipe format not supported!")
+    
+    # - Send GET request
+    return redirect_alert(new_recipe_get_request(recipe), "Recipe imported successfully!", "success")
+
+# Import a recipe from a file
+@app.route("/import/file", methods=["POST"])
+@logged_in_only
+def import_from_file_page():
+    # - Valdiate input
+    # Validate: File is uploaded
+    if "recipe-file" not in request.files or request.files['recipe-file'].filename == "":
+        return redirect_alert("/import_recipe", "No file selected!")
+    
+    recipe_file = request.files['recipe-file']
+    
+    # Secure filename
+    recipe_file.filename = secure_filename(recipe_file.filename)
+    
+    # Valdiate: File extension allowed
+    if not allowed_extension(recipe_file.filename, ["xml"]):
+        return redirect_alert("/import_recipe", "File extension not allowed. Please upload a valid XML file!")
+    
+    # - Generate recipe object
+    recipe = import_xml(recipe_file)
+    
+    if not recipe:
+        return redirect_alert("/import_recipes", "Recipe not found/Recipe format not supported!")
+    
+    # - Send the GET request
+    return redirect_alert(new_recipe_get_request(recipe), "Recipe imported successfully!", "success")
 
 # Show all of the users recipes (My Recipes page)
 @app.route("/recipes")

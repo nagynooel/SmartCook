@@ -469,6 +469,9 @@ body {
 .recipe-form #ingredients-cont .ingredient .quantity {
   width: 5rem;
 }
+.recipe-form #ingredients-cont .ingredient #measurement {
+  width: 5rem;
+}
 .recipe-form #ingredients-cont .ingredient select {
   background-color: hsl(0deg, 0%, 10.2%);
   color: white;
@@ -620,6 +623,10 @@ body {
     margin-bottom: 2.5rem;
   }
 }
+#import-recipe-cont input {
+  width: 80%;
+}
+
 #register-cont, #login-cont, #reset-password-cont, #new-password-cont {
   width: -webkit-fit-content;
   width: -moz-fit-content;

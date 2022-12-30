@@ -12,6 +12,7 @@
             <h1 class="text-center title">New Recipe</h1>
             <div class="container mb-5">
                 <form action="/new_recipe" method="POST" enctype="multipart/form-data" class="form recipe-form">
+                    
                     <div class="row">
                         <div class="col-12 col-lg-6 mb-5">
                             <div class="row">
@@ -84,6 +85,42 @@
 {% endblock %}
 
 {% block pagescript %}
+    
+    {% if paramaters_available %}
+        <script>
+            localStorage.clear()
+            
+            localStorage.setItem("new-recipe-title", `{{ title }}`)
+            localStorage.setItem("new-recipe-description", `{{ description }}`)
+            {% if preptime %}
+                localStorage.setItem("new-recipe-prep-hour", `{{ preptime[:2] | int }}`)
+                localStorage.setItem("new-recipe-prep-min", `{{ preptime[2:] | int }}`)
+            {% endif %}
+            {% if cooktime %}
+                localStorage.setItem("new-recipe-cook-hour", `{{ cooktime[:2] | int }}`)
+                localStorage.setItem("new-recipe-cook-min", `{{ preptime[2:] | int }}`)
+            {% endif %}
+            localStorage.setItem("new-recipe-serving", `{{ servings }}`)
+            
+            let ingredients = []
+            
+            {% for ingredient in ingredients %}
+                ingredients.push({'quantity':'{{ ingredient['quantity'] }}', 'unit':'{{ ingredient['unit'] }}', 'name':`{{ ingredient['name'] }}`})
+            {% endfor %}
+            
+            localStorage.setItem("new-recipe-ingredients", JSON.stringify(ingredients))
+            
+            let instructions = []
+            
+            {% for instruction in instructions %}
+                instructions.push(`{{ instruction }}`)
+            {% endfor %}
+            
+            localStorage.setItem("new-recipe-steps", JSON.stringify(instructions))
+            
+        </script>
+    {% endif %}
+    
     <script src="{{ url_for('static', filename='js/recipe_editor.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 {% endblock %}

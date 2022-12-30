@@ -40,15 +40,8 @@ $("#remove_image_btn").click(function(e){
 let ingredient_html = 
 `<div class="ingredient form-group form-flex">
     <input type="number" class="quantity" name="quantity" id="quantity" placeholder="Quantity *" min="0" value="%quantity%" step=".01" required>
-    <select name="measurement">
-        <option value="g">g</option>
-        <option value="dag">dag</option>
-        <option value="kg">kg</option>
-        <option value="cup">cup</option>
-        <option value="pinch">pinch</option>
-        <option value="pc(s)">pc(s)</option>
-        </select>
-        <input type="text" name="ingredient-name" placeholder="Ingredient name *" value="%name%" maxlength="100" required>
+    <input type="text" name="measurement" id="measurement" value="%unit%">
+    <input type="text" name="ingredient-name" placeholder="Ingredient name *" value="%name%" maxlength="100" required>
     <button class="remove-btn btn btn-danger" id="remove_ingredient_btn">-</button>
     </div>`
 
@@ -59,14 +52,10 @@ function add_ingredient(quantity=100, unit="g", name="") {
     // Hide warning if shown
     $("#ingredients-warning").hide()
     
-    // Replace quantity and ingredient name
-    let current_ingredient = ingredient_html.replace("%quantity%", quantity).replace("%name%", name)
+    // Replace quantity, measurement and ingredient name
+    let current_ingredient = ingredient_html.replace("%quantity%", quantity).replace("%unit%", unit).replace("%name%", name)
     
-    // Select the given unit in the measurement selection
-    let searchFor = `value="${unit}"`
-    let index = current_ingredient.indexOf(searchFor) + searchFor.length
-    
-    $("#ingredients-cont").append(current_ingredient.slice(0, index) + " selected " + current_ingredient.slice(index))
+    $("#ingredients-cont").append(current_ingredient)
     ingredient_count += 1
 }
 
