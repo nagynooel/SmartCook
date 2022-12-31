@@ -133,7 +133,10 @@ def import_from_url(url):
     soup = BeautifulSoup(content, 'html.parser')
     content_inner = soup.find("script", type="application/ld+json")
     
-    json = loads(content)
+    try:
+        json = loads(content)
+    except:
+        return False
     
     recipe = {}
     

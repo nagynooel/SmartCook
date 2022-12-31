@@ -24,8 +24,6 @@ from json import loads
 
 from bs4 import BeautifulSoup
 
-import io
-
 
 # -- Configure application
 app = Flask(__name__)
@@ -98,7 +96,7 @@ def new_recipe():
         
         # Get all data of the ingredients and validate them
         for quantity in request.form.getlist("quantity"):
-            if not quantity or not quantity.isnumeric():
+            if not quantity or not quantity.isdigit():
                 return redirect_alert("/new_recipe", "Please write only numeric characters in quantity fields!")
             
             ingredients.append({"quantity":quantity})
@@ -232,7 +230,10 @@ def new_recipe():
     ingredients = []
     
     if ingredients_raw is not None:
-        ingredients_raw = loads(ingredients_raw.replace("\'", "\""))
+        try:
+            ingredients_raw = loads(ingredients_raw.replace("\'", "\""))
+        except:
+            return redirect_alert("/import_recipe", "Recipe not found or recipe format not supported!")
         
         # Check if list is already in correct format
         if type(ingredients_raw[0]) is dict:
